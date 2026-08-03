@@ -2,26 +2,72 @@ import { CheckCircle2, Heart } from "lucide-react";
 import type { Deal } from "@/lib/deals";
 import StarRating from "./StarRating";
 
-const CATEGORY_IMAGE: Record<string, string> = {
-  massage: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=250&fit=crop",
-  beauty: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=250&fit=crop",
-  fitness: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop",
-  dining: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=250&fit=crop",
-  activities: "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&h=250&fit=crop",
+const CATEGORY_PHOTO_IDS: Record<string, string[]> = {
+  massage: [
+    "photo-1544161515-4ab6ce6db874",
+    "photo-1519823551278-64ac92734fb1",
+    "photo-1600334129128-685c5582fd35",
+    "photo-1590439471364-192aa70c0b53",
+  ],
+  beauty: [
+    "photo-1560066984-138dadb4c035",
+    "photo-1522335789203-aabd1fc54bc9",
+    "photo-1487412947147-5cebf100ffc2",
+    "photo-1580618672591-eb180b1a973f",
+  ],
+  fitness: [
+    "photo-1571019613454-1cb2f99b2d8b",
+    "photo-1517836357463-d25dfeac3438",
+    "photo-1540497077202-7c8a3999166f",
+    "photo-1552674605-db6ffd4facb5",
+  ],
+  dining: [
+    "photo-1517248135467-4c7edcad34c4",
+    "photo-1414235077428-338989a2e8c0",
+    "photo-1466978913421-dad2ebd01d17",
+    "photo-1424847651672-bf20a4b0982b",
+  ],
+  activities: [
+    "photo-1530549387789-4c1017266635",
+    "photo-1553481187-be93c21490a9",
+    "photo-1449824913935-59a10b8d2000",
+    "photo-1511882150382-421056c89033",
+  ],
 };
 
-// Deterministic per-deal "was" discount (30-55%) so prices don't shift on re-render.
-function discountFor(dealId: string): number {
-  let hash = 0;
-  for (let i = 0; i < dealId.length; i++) {
-    hash = (hash * 31 + dealId.charCodeAt(i)) >>> 0;
+const CATEGORY_IMAGES: Record<string, string[]> = Object.fromEntries(
+  Object.entries(CATEGORY_PHOTO_IDS).map(([category, ids]) => [
+    category,
+    ids.map((id) => `https://images.unsplash.com/${id}?w=400&h=250&fit=crop`),
+  ]),
+);
+
+// Deterministic hash (FNV-1a + avalanche finalizer) so the same deal always
+// resolves to the same photo and discount, with well-mixed bits so nearby
+// deal IDs (D00108, D00109, ...) don't cluster onto the same photo index.
+function hashString(value: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
   }
-  return 0.3 + (hash % 26) / 100;
+  hash ^= hash >>> 16;
+  hash = Math.imul(hash, 0x85ebca6b);
+  hash ^= hash >>> 13;
+  hash = Math.imul(hash, 0xc2b2ae35);
+  hash ^= hash >>> 16;
+  return hash >>> 0;
+}
+
+function discountFor(hash: number): number {
+  return 0.3 + ((hash >>> 8) % 26) / 100;
 }
 
 export default function DealCard({ deal }: { deal: Deal }) {
-  const image = CATEGORY_IMAGE[deal.categoryL2] ?? CATEGORY_IMAGE.activities;
-  const discount = discountFor(deal.dealId);
+  const images = CATEGORY_IMAGES[deal.categoryL2] ?? CATEGORY_IMAGES.activities;
+  const hash = hashString(deal.dealId);
+  const image = images[hash % images.length];
+  const discount = discountFor(hash);
   const originalPrice = Math.round((deal.priceUsd / (1 - discount)) * 100) / 100;
   const percentOff = Math.round((1 - deal.priceUsd / originalPrice) * 100);
 
