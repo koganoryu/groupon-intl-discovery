@@ -32,6 +32,8 @@ const CATEGORY_PHOTO_IDS: Record<string, string[]> = {
     "photo-1553481187-be93c21490a9",
     "photo-1449824913935-59a10b8d2000",
     "photo-1511882150382-421056c89033",
+    "photo-1519501025264-65ba15a82390",
+    "photo-1517457373958-b7bdd4587205",
   ],
 };
 

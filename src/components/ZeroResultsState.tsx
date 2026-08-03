@@ -1,4 +1,4 @@
-import { Compass, SearchX } from "lucide-react";
+import { SearchX } from "lucide-react";
 
 const ADVENTURE_ALTERNATIVES = [
   "Escape Room Experience",
@@ -24,7 +24,7 @@ export function AdventureGapState({
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center gap-4 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-8 py-12 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-        <Compass size={28} className="text-amber-600" />
+        <SearchX size={28} className="text-amber-600" />
       </div>
       <div className="space-y-1.5">
         <h2 className="text-lg font-semibold text-zinc-900">
